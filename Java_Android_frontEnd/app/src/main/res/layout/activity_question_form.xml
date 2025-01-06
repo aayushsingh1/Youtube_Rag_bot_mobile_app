@@ -1,0 +1,41 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#8a004a">
+
+    <EditText
+        android:id="@+id/inputText"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Enter your question"
+        android:layout_centerHorizontal="true"
+        android:height="50dp"
+        android:textColor="#e7cfd7"
+        android:layout_marginTop="80dp"/>
+    <Button
+        android:id="@+id/submitButton"
+        android:textColor="#3c0020"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="140dp"
+        android:layout_centerHorizontal="true"
+        android:text="Submit" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="536dp"
+        android:layout_marginTop="230dp">
+
+
+        <TextView
+            android:id="@+id/outputText"
+            android:layout_width="312dp"
+            android:layout_height="331dp"
+            android:layout_marginStart="45dp"
+            android:height="50dp"
+            android:text="Output will be displayed here . Responses can take some time so so not spam submit button"
+            android:textColor="#e7cfd7"/>
+    </ScrollView>
+
+</RelativeLayout>

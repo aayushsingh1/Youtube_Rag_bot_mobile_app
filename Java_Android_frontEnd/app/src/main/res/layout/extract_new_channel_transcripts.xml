@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#8a004a">
+
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/enter_channel_name_input_for_extraction"
+        android:layout_width="377dp"
+        android:layout_height="64dp"
+        android:hint="eg: @adultswim"
+        android:layout_marginStart="18dp"
+        android:textColor="@color/black"
+        android:layout_marginTop="100dp" />
+
+    <TextView
+
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="32dp"
+        android:ems="10"
+        android:textColor="#e7cfd7"
+        android:text="Enter Youtube Channel user-id below:" />
+
+    <Button
+        android:id="@+id/submit_button"
+        android:layout_width="150dp"
+        android:layout_height="55dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="60dp"
+        android:layout_marginTop="200dp"
+        android:text="SUBMIT"
+        android:textColor="#3c0020"
+
+
+        />
+
+    <TextView
+        android:id="@+id/extraction_result"
+        android:layout_width="413dp"
+        android:layout_height="469dp"
+        android:text="Results will be shown here\nDownload all transcripts and embedding them can take few minutes so please have patience "
+        android:layout_marginTop="270dp"
+        android:textColor="#e7cfd7"/>
+
+
+</RelativeLayout>

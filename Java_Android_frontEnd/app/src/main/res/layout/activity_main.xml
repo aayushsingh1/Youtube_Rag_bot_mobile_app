@@ -1,0 +1,86 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#8a004a">
+
+    <Button
+        android:id="@+id/btn_extract"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Extract New Channel Transcript"
+        android:onClick="goToNewActivity"
+        android:textColor="#3c0020"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        />
+
+    <Button
+        android:id="@+id/btn_view"
+        android:textColor="#3c0020"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="View Extracted Channels"
+        android:onClick="goToNewActivity"
+        android:layout_below="@id/btn_extract"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/btn_read"
+        android:textColor="#3c0020"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Read Transcript"
+        android:onClick="goToNewActivity"
+        android:layout_below="@id/btn_view"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/btn_ask"
+        android:textColor="#3c0020"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Ask Question"
+        android:onClick="goToNewActivity"
+        android:layout_below="@id/btn_read"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"/>
+
+    <TextView
+        android:id="@+id/main_message_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below ="@+id/image_connection_status"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+         />
+
+
+    <TextView
+        android:id="@+id/main_message_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below ="@+id/main_message_1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:textColor="#e7cfd7"
+        android:text="Use this app to ask questions based on youtube videos transcripts\nFirst need to extract transcript for particular channel then ask question\nThere can be possibel delays as I am hosting this app in my Potato PC."
+         />
+
+    <ImageView
+        android:id="@+id/image_connection_status"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below ="@+id/btn_ask"
+        android:layout_marginTop="100dp"
+       />
+
+
+</RelativeLayout>
+
+
+
+
