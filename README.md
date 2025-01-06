@@ -47,16 +47,21 @@ To run the backend application, you will need:
   /java/com/example contains all java files .
 
    The Java files are of these type
-   ApiClient.java : this file is used to enter the details of backend client ,
+   ApiClient.java : this file is used to enter the details of backend client
+  
    Apiservice_xxx : to create an API request to backend flask app , with various formats
+  
    data_xxx : these files match the json format which is from the API request is received from flask app
-   view_xxx : these are files that implement the core logic of the frontend app , handling api requests and various front end 
-              widgets
+  
+   view_xxx : these are files that implement the core logic of the frontend app , handling api requests and various front end widgets
+  
    MainActivity.java : It handles the first view which is loaded when app is started initially 
    
    
    
-   I have used retrofit library in java to handle the API requests 
+   I have used retrofit library in java to handle the API requests
+
+  
    ## IMP : To add the IP address of backend server need to modify below files
    
    1. Java_Android_frontEnd/app/src/main/java/com/example/myyoutuberagbot/ApiClient.java line no. 23
