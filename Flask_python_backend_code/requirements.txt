@@ -1,0 +1,10 @@
+Flask
+flask-sse
+numpy
+youtube-api-python
+youtube-transcript-api
+google-api-python-client
+langchain-google-genai
+langchain
+youtube-data-api
+scikit-learn
