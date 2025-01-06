@@ -14,11 +14,11 @@ app = Flask(__name__)
 
 # Replace with your own LLM API key
 
-GOOGLE_API_KEY = 'AIzaSyAw5nvZvpGwAkdgvxpjeVi97ICvhbIk4Pg'
+GOOGLE_API_KEY = ''
 
 
 # Replace with your own youtube service API key
-youtube_api_key = 'AIzaSyA9gKWMttcxlAIhTqEmy8L8kyDaNo-P008'
+youtube_api_key = ''
 llm = GoogleGenerativeAI(model="gemini-1.5-flash",api_key=GOOGLE_API_KEY)
 
 
