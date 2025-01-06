@@ -20,7 +20,7 @@ public class ApiClient {
 //        }
 //    }
 
-    private static final String BASE_URL = "http://[2405:201:680c:a121:e877:1a52:e1c7:47aa]:5000";
+    private static final String BASE_URL = "http://[Your IP v6 address here]:5000";
     //private static final String BASE_URL = "http://" + localHost.getHostAddress() + ":5000";
     private static Retrofit retrofit = null;
 
