@@ -1,0 +1,396 @@
+import os
+import numpy as np
+from youtube_transcript_api import YouTubeTranscriptApi
+from googleapiclient.discovery import build
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAI
+import re
+from youtube_transcript_api import TranscriptsDisabled
+from googleapiclient.errors import HttpError
+
+transcript_info_path =  f'/home/aayush/Downloads/For_youtube_rag_project/transcript_update_history.json'
+
+
+# Function to get channel ID from username
+def get_channel_id(username,youtube_api_key):
+    youtube = build('youtube', 'v3', developerKey=youtube_api_key)
+    request = youtube.search().list(
+        part='snippet',
+        q=username,
+        type='channel',
+        maxResults=1
+    )
+
+
+    response = request.execute()
+    print(response)
+
+    
+    for item in response['items']:
+        if 'channelId' in item['snippet']:
+            print("-----------------")
+            return item['snippet']['channelId']
+
+        return None
+
+            
+
+
+
+
+## Get video ids of all videos in a channel
+def get_all_video_ids(channel_id,youtube_api_key):
+    video_ids = []
+    youtube = build('youtube', 'v3', developerKey=youtube_api_key)
+    next_page_token = None
+
+    while True:
+        # Make a request to the API with pagination
+        request = youtube.search().list(
+            part='id',
+            channelId=channel_id,
+            maxResults=50,
+            order='date',
+            type='video',
+            pageToken=next_page_token
+        )
+        response = request.execute()
+
+        for item in response['items']:
+            video_ids.append(item['id']['videoId'])
+
+        # Check if there is a next page token
+        next_page_token = response.get('nextPageToken')
+        if not next_page_token:
+            break
+
+    return video_ids
+
+
+
+# video_ids = get_all_video_ids(channel_id)
+
+
+
+# Function to get transcript from video ID
+def get_transcript(video_id) :
+
+    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+    
+    return transcript
+
+
+
+def save_transcript_in_text_format(c_username, directory,youtube_api_key):
+    function_succeeded_flag = 0
+   
+    # print_statement = 'Saving video transcripts from YouTube to my PC\n'
+
+    # # print(print_statement)
+    # yield print_statement
+    youtube = build('youtube', 'v3', developerKey=youtube_api_key)
+
+
+    try:
+        channel_id = get_channel_id(c_username,youtube_api_key)
+        video_ids = get_all_video_ids(channel_id,youtube_api_key)
+        dic = os.path.join(directory, c_username)
+        os.makedirs(dic, exist_ok=True)
+        counter_new_videos_saved = 0
+        counter_video_transcript_already_present = 0
+
+
+
+        for video_id in video_ids:
+            # Make a request to the API
+            response = youtube.videos().list(
+                part='snippet',
+                id=video_id
+            ).execute()
+
+            # Extract the video title 
+            video_title = response['items'][0]['snippet']['title']
+            video_title = re.sub(r'[—<>:"/\\|*]', '_', video_title)
+            # print(f'Video Title: {video_title}')
+            
+            # Define the file path for the transcript
+            file_path = os.path.join(dic, f'{video_title}.txt')
+
+            # Check if the transcript file already exists
+            if os.path.exists(file_path):
+                # print_statement = f'Transcript already exists for "{video_title}" . Skipping...\n'
+                # # print(print_statement)
+                # yield print_statement
+
+                counter_video_transcript_already_present += 1 
+                continue  # Skip to the next video if the file exists
+
+            transcript = get_transcript(video_id)
+            if isinstance(transcript, list):
+                text = ''
+
+                for entry in transcript:
+                    text += entry['text'] + '\n'
+                
+                with open(file_path, 'w') as file:
+                    file.write(f'Video title is {video_title}\n')
+                    file.write(text)
+
+                counter_new_videos_saved += 1
+                # print_statement = f'Transcript saved for title:{video_title}\n'
+                # # print(print_statement)
+                # yield print_statement
+        function_succeeded_flag = 1
+
+
+        return (counter_new_videos_saved , counter_video_transcript_already_present , function_succeeded_flag)
+    except HttpError as e:
+        if e.resp.status == 404:  # Channel not found
+            return ("The YouTube channel does not exist.", None, function_succeeded_flag)
+        elif e.reason == 'quotaExceeded':
+            return ("Quota from YouTube API has exceeded", None, function_succeeded_flag)
+        else:
+            return (e.reason, None, function_succeeded_flag)
+
+    except TranscriptsDisabled:
+        return ("Transcripts are disabled for this video.", None, function_succeeded_flag)
+
+    except Exception as e:
+        return (str(e), None, function_succeeded_flag)
+
+
+
+
+
+
+
+def chunk_text_with_overlap(text, max_length=512, overlap=50):
+    sentences = text.split('. ')
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    
+    i = 0
+    while i < len(sentences):
+        sentence = sentences[i]
+        sentence_length = len(sentence.split())
+        if current_length + sentence_length > max_length:
+            chunks.append('. '.join(current_chunk))
+            # Start a new chunk with overlap
+            current_chunk = current_chunk[-overlap:]
+            current_length = sum(len(sent.split()) for sent in current_chunk)
+        current_chunk.append(sentence)
+        current_length += sentence_length
+        i += 1
+    
+    if current_chunk:
+        chunks.append('. '.join(current_chunk))
+    
+    return chunks
+
+def chunk_and_save_documents_with_overlap(source_folder, destination_chunk_folder,channel_name ,max_length=512, overlap=50):
+    try :
+        is_successful = 0
+        cause_of_error = "NA"
+        counter = 0
+        
+        source_folder_with_transcript = os.path.join(source_folder,channel_name)
+        chunk_folder_path= os.path.join(destination_chunk_folder,channel_name)
+        if not os.path.exists(chunk_folder_path):
+            os.makedirs(chunk_folder_path)
+        
+        
+        for file_name in os.listdir(source_folder_with_transcript):
+            file_path = os.path.join(source_folder_with_transcript, file_name)
+            with open(file_path, 'r') as file:
+                text = file.read()
+            
+            chunks = chunk_text_with_overlap(text, max_length, overlap)
+            base_name = os.path.splitext(file_name)[0]
+            
+            for i, chunk in enumerate(chunks):
+                chunk_file_name = f"{base_name}-{i + 1}.txt"
+                chunk_file_path = os.path.join(chunk_folder_path, chunk_file_name)
+                with open(chunk_file_path, 'w') as chunk_file:
+                    chunk_file.write(chunk)
+                counter = counter + 1
+        is_successful = 1
+        # print(f"Converted to text chunks, No of chunks created:{counter}")
+
+    except FileNotFoundError as e:
+        is_successful = 0
+        cause_of_error = "Transcripts not yet downloaded for the channel"
+
+            
+
+    except Exception as e:
+        is_successful = 0
+        cause_of_error = str(e)
+
+
+    return counter , is_successful , cause_of_error
+    
+
+
+
+
+
+def convert_text_to_embedding(chunk_folder, embedding_folder, channel_name, GOOGLE_API_KEY):
+    print('Saving text file in embedding format')
+    chunk_folder_location = os.path.join(chunk_folder, channel_name)
+    embedding_folder_location = os.path.join(embedding_folder, channel_name)
+    embeddings_model = GoogleGenerativeAIEmbeddings(model='models/embedding-001', google_api_key=GOOGLE_API_KEY)
+    newly_embedded_chunks_counter = 0
+    already_existing_counter = 0
+    is_successful = 0
+    try :
+
+        # Creating destination folder to store embeddings
+        if not os.path.exists(embedding_folder_location):
+            os.makedirs(embedding_folder_location)
+
+
+        cause_of_error = ''
+
+
+
+    # Iterating through source folder and embedding them
+        for filename in os.listdir(chunk_folder_location):
+            file_path = os.path.join(chunk_folder_location, filename)
+
+            # Define the embedding file path
+            embedding_filename = os.path.splitext(filename)[0] + '.txt'
+            embedding_path = os.path.join(embedding_folder_location, embedding_filename)
+
+            # Check if the embedding file already exists
+            if os.path.exists(embedding_path):
+                # print(f'Embedding file for "{filename}" already exists. Skipping...')
+                already_existing_counter += 1
+                continue  # Skip to the next file if the embedding file exists
+
+
+            # Read the content of the file
+            with open(file_path, 'r') as file:
+                text = file.read()
+                
+                
+
+            # Generate embeddings
+            embedding = embeddings_model.embed_query(text)
+
+            # Save the embedding to the destination folder
+            with open(embedding_path, 'w') as embedding_file:
+                embedding_file.write(str(embedding))
+                newly_embedded_chunks_counter += 1
+        is_successful = 1
+
+    except FileNotFoundError as e:
+            is_successful = 0
+            cause_of_error = "Transcripts not yet downloaded for the channel"
+
+            
+
+    except Exception as e:
+            is_successful = 0
+            cause_of_error = str(e)
+		
+
+    return newly_embedded_chunks_counter , already_existing_counter , is_successful , cause_of_error
+
+
+
+def count_files_in_transcript_folder(transcript_path,channel_name):
+    folder_path = os.path.join(transcript_path, channel_name)
+    try:
+        # List all files in the directory
+        files = os.listdir(folder_path)
+        
+        #  count elements in directory
+        file_count = sum(1 for file in files )
+        
+        return file_count
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return 0
+
+#############
+
+# 
+import os
+from sklearn.metrics.pairwise import cosine_similarity
+
+
+def load_embeddings(channel_name):
+    embedding_directory =  f'/home/aayush/Downloads/For_youtube_rag_project/embeddings/'
+    embeddings = {}
+    path = os.path.join(embedding_directory,channel_name)
+
+    for video_title in os.listdir(path):
+        video_path = os.path.join(path, video_title)
+        with open(video_path, 'r') as f:
+            # Read the content of the file and convert it to a numpy array
+            embedding_str = f.read().strip()
+            embedding = np.array(eval(embedding_str))
+            embeddings[video_title] = embedding
+
+    return embeddings
+
+
+
+
+def embed_text(model, text):
+    return model.embed_query(text)
+
+def retrieve_top_k_documents(question_embedding, embeddings, k=5):
+    similarities = []
+    for title, embedding in embeddings.items():
+        similarity = cosine_similarity([question_embedding], [embedding])[0][0]
+        similarities.append((similarity, title,embedding))
+    
+    similarities.sort(reverse=True, key=lambda x: x[0])
+    return similarities[:k]
+
+# from langchain_google_genai import GoogleGenerativeAI
+# llm = GoogleGenerativeAI(model="gemini-1.5-flash",api_key=GOOGLE_API_KEY)
+#
+
+def ask_question_function(question, channel_name,api_key):
+    embeddings_model = GoogleGenerativeAIEmbeddings(model='models/embedding-001', google_api_key=api_key)  # Use your embedding model here
+    gen_ai_llm = GoogleGenerativeAI(model="gemini-1.5-flash",api_key=api_key)
+    chunk_storage_path = f'/home/aayush/Downloads/For_youtube_rag_project/transcripts with chunks/'
+    embeddings = load_embeddings(channel_name)
+    
+    question_embedding = embed_text(embeddings_model, question)
+
+    top_k_documents = retrieve_top_k_documents(question_embedding, embeddings)
+
+    retrieved_texts = []
+    for score, title, content in top_k_documents:
+        print(f"Title: {title}, Similarity: {score} \n")
+        
+        chunk_path = os.path.join(chunk_storage_path, channel_name, title)
+        with open(chunk_path, 'r') as file:
+            text = file.read()
+            # print(text)
+            # Include title and content in the retrieved texts
+            retrieved_texts.append(f"Title: {title}\nContent: {text}")
+
+    # Combine retrieved texts to form a prompt for the generator
+    combined_prompt = f"You are implementing chat support and need to answer question only based on title and content of decuments provided. \nQuestion: {question}\n" + "\n\n".join(retrieved_texts)
+    
+    # Generate response using Google API
+    response = gen_ai_llm.invoke(combined_prompt)
+    print(response)
+    
+    return response
+
+
+
+
+
+if __name__ == "__main__":
+
+
+
+    print("Main gunction here")
