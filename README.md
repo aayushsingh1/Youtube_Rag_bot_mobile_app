@@ -17,7 +17,7 @@ REST APIs are used for communication
 
 ## Status
 Currently hosting this app on my PC , so this app will be available when my PC is active and online
-I am using free tier of Youtube data API and Gemini LLM , so it is easy to face issues due to token limit reached .
+I am using free tier of Youtube data API and Gemini LLM , so it is can face issues due to token limit reached if extracting channel with huge video count  .
 
 
 
